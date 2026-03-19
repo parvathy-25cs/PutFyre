@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us</title>
+
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <style>
+        /* ─── Reset & Base ─────────────────────────────────────── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f7f7f7;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ─── Card ──────────────────────────────────────────────── */
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+            padding: 48px 44px 40px;
+            width: 100%;
+            max-width: 780px;
+        }
+
+        /* ─── Row: two columns ──────────────────────────────────── */
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 40px;
+        }
+
+        /* ─── Field wrapper ─────────────────────────────────────── */
+        .field {
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+            border: none;
+            border-bottom: 1.8px solid #ccc;
+            padding: 8px 0;
+            font-size: 14px;
+            color: #333;
+            background: transparent;
+            outline: none;
+            transition: border-color 0.25s;
+            font-family: inherit;
+            resize: none;
+        }
+
+        .field textarea {
+            min-height: 42px;
+            overflow: hidden;
+        }
+
+        .field input::placeholder,
+        .field textarea::placeholder {
+            color: #999;
+            font-size: 13.5px;
+        }
+
+        /* Focus glow on underline */
+        .field input:focus,
+        .field textarea:focus {
+            border-bottom-color: #e91e8c;
+        }
+
+        /* Validation states */
+        .field input.invalid,
+        .field textarea.invalid {
+            border-bottom-color: #e53935;
+        }
+
+        .field .err-msg {
+            color: #e53935;
+            font-size: 11.5px;
+            margin-top: 4px;
+            display: none;
+            position: absolute;
+            left: 0;
+        }
+
+        .field .err-msg.show {
+            display: block;
+        }
+
+        /* ─── Submit button ─────────────────────────────────────── */
+        .btn-wrap {
+            display: flex;
+            justify-content: center;
+            margin-top: 14px;
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(135deg, #e91e8c 0%, #f06292 100%);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            padding: 13px 52px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 18px rgba(233, 30, 140, 0.35);
+            transition: opacity 0.2s, transform 0.15s;
+        }
+
+        button[type="submit"]:hover {
+            opacity: 0.88;
+            transform: translateY(-1px);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        button[type="submit"]:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ─── Toast notification ─────────────────────────────────── */
+        #toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 14px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+            display: none;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        }
+
+        #toast.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #43a047;
+        }
+
+        #toast.error {
+            background: #fdecea;
+            color: #c62828;
+            border-left: 4px solid #e53935;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* ─── Spinner inside button ─────────────────────────────── */
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #fff4;
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Toast -->
+    <div id="toast"></div>
+
+    <div class="card">
+        <form id="contactForm" novalidate>
+
+            <!-- Row 1: Full Name + Email -->
+            <div class="row">
+                <div class="field">
+                    <input type="text" id="fullname" name="fullname" placeholder="Full Name*" autocomplete="name" />
+                    <span class="err-msg" id="err-fullname">Please enter your full name (min 3 chars).</span>
+                </div>
+                <div class="field">
+                    <input type="email" id="email" name="email" placeholder="Email ID*" autocomplete="email" />
+                    <span class="err-msg" id="err-email">Please enter a valid email address.</span>
+                </div>
+            </div>
+
+            <!-- Row 2: Subject -->
+            <div class="field">
+                <input type="text" id="subject" name="subject" placeholder="Subject*" />
+                <span class="err-msg" id="err-subject">Subject is required.</span>
+            </div>
+
+            <!-- Row 3: Message -->
+            <div class="field">
+                <textarea id="message" name="message" placeholder="Query / Message*" rows="2"></textarea>
+                <span class="err-msg" id="err-message">Please enter your message.</span>
+            </div>
+
+            <!-- Submit -->
+            <div class="btn-wrap">
+                <button type="submit" id="submitBtn">Submit</button>
+            </div>
+
+        </form>
+    </div>
+
+    <script>
+        // ── EmailJS credentials ────────────────────────────────────
+        // 1. Sign up at https://www.emailjs.com (free)
+        // 2. Create an Email Service → copy the Service ID below
+        // 3. Create an Email Template → copy the Template ID below
+        // 4. Go to Account → API Keys → copy your Public Key below
+        const EMAILJS_PUBLIC_KEY  = "hgAhGuzZLBZE5sG0_";   // e.g. "user_xxxxxxxxxxxxxx"
+        const EMAILJS_SERVICE_ID  = "service_nqo89pd";   // e.g. "service_xxxxxxx"
+        const EMAILJS_TEMPLATE_ID = "template_l53f1qf";  // e.g. "template_xxxxxxx"
+
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+
+        // ── Helpers ────────────────────────────────────────────────
+        function showError(id, msg) {
+            document.getElementById(id).value !== undefined
+                ? document.getElementById(id).classList.add('invalid')
+                : null;
+            const el = document.getElementById('err-' + id);
+            if (msg) el.textContent = msg;
+            el.classList.add('show');
+        }
+
+        function clearError(id) {
+            const input = document.getElementById(id);
+            if (input) input.classList.remove('invalid');
+            const el = document.getElementById('err-' + id);
+            if (el) el.classList.remove('show');
+        }
+
+        function showToast(type, text) {
+            const t = document.getElementById('toast');
+            t.className = type;
+            t.textContent = text;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 4500);
+        }
+
+        // Auto-grow textarea
+        document.getElementById('message').addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Live validation — clear errors on input
+        ['fullname', 'email', 'subject', 'message'].forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('input', () => clearError(id));
+        });
+
+        // ── Validation ─────────────────────────────────────────────
+        function validate() {
+            let valid = true;
+            const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+            const name = document.getElementById('fullname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const subject = document.getElementById('subject').value.trim();
+            const message = document.getElementById('message').value.trim();
+
+            if (name.length < 3) {
+                showError('fullname', name === '' ? 'Full name is required.' : 'Name must be at least 3 characters.');
+                valid = false;
+            }
+            if (!emailReg.test(email)) {
+                showError('email', email === '' ? 'Email is required.' : 'Please enter a valid email address.');
+                valid = false;
+            }
+            if (!subject) {
+                showError('subject', 'Subject is required.');
+                valid = false;
+            }
+            if (!message) {
+                showError('message', 'Message / Query is required.');
+                valid = false;
+            }
+
+            return valid;
+        }
+
+        // ── Form Submit ─────────────────────────────────────────────
+        document.getElementById('contactForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            if (!validate()) return;
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Sending…';
+
+            const payload = {
+                fullname: document.getElementById('fullname').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                subject: document.getElementById('subject').value.trim(),
+                message: document.getElementById('message').value.trim(),
+            };
+
+            // ── Send via EmailJS (pure JavaScript, no server needed) ──
+            // Template variables must match the placeholders in your
+            // EmailJS template, e.g. {{fullname}}, {{email}}, etc.
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, payload)
+                .then(function () {
+                    showToast('success', '✅ Message sent successfully!');
+                    document.getElementById('contactForm').reset();
+                    document.getElementById('message').style.height = 'auto';
+                })
+                .catch(function (err) {
+                    console.error('EmailJS error:', err);
+                    showToast('error', '❌ Failed to send. Check your EmailJS credentials.');
+                })
+                .finally(function () {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Submit';
+                });
+        });
+    </script>
+
+</body>
+
+</html>
