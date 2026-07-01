@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Reset your password secure portal page for the HRM employee portal. Verify your account with email OTP.">
+    <title>Reset Password - HRM</title>
+    <link rel="icon" type="image/png" href="PutFyre.png">
+    <link rel="stylesheet" href="css.css">
+    <script src="db.js"></script>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card">
+            <!-- Logo Section -->
+            <div class="logo-container">
+                <img src="PutFyre.png" alt="HRM Logo" class="logo-icon">
+                <span class="logo-text">HRM</span>
+            </div>
+
+            <!-- STEP 1: REQUEST OTP -->
+            <div class="step-container active" id="step-request">
+                <div class="header-section">
+                    <h1 class="login-title">Forgot Password</h1>
+                    <p class="header-subtitle">Enter your registered email address to receive a verification code</p>
+                </div>
+
+                <form class="login-form" id="form-request" novalidate>
+                    <div class="input-group">
+                        <input type="text" id="request-email" name="Email ID" placeholder="Email Address" required autocomplete="email">
+                    </div>
+
+                    <button type="submit" class="btn-signin" id="btn-request">Send Verification Code</button>
+
+                    <div class="create-account-container">
+                        <a href="login.html" class="create-link"><span class="link-highlight">Back to Log In</span></a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- STEP 2: VERIFY OTP -->
+            <div class="step-container" id="step-verify">
+                <div class="header-section">
+                    <h1 class="login-title">Verify OTP</h1>
+                    <p class="header-subtitle">We have simulated sending a 6-digit verification code to <strong id="sent-email-target">user@company.com</strong></p>
+                </div>
+
+                <form class="login-form" id="form-verify" novalidate>
+                    <!-- OTP Fields -->
+                    <div class="otp-container">
+                        <input type="text" class="otp-field" maxlength="1" required autocomplete="off" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 1">
+                        <input type="text" class="otp-field" maxlength="1" required autocomplete="off" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 2">
+                        <input type="text" class="otp-field" maxlength="1" required autocomplete="off" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 3">
+                        <input type="text" class="otp-field" maxlength="1" required autocomplete="off" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 4">
+                        <input type="text" class="otp-field" maxlength="1" required autocomplete="off" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 5">
+                        <input type="text" class="otp-field" maxlength="1" required autocomplete="off" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 6">
+                    </div>
+
+                    <!-- Single hidden container to hold custom verification error styling -->
+                    <div class="input-group" style="margin-bottom: 8px; display: none;" id="otp-error-anchor">
+                        <input type="hidden">
+                    </div>
+
+                    <!-- Timer Details -->
+                    <div class="timer-container">
+                        <span class="timer-text">Expires in: <strong id="timer">05:00</strong></span>
+                        <button type="button" class="resend-btn" id="resend-btn" disabled>Resend Code</button>
+                    </div>
+
+                    <button type="submit" class="btn-signin" id="btn-verify">Verify Code</button>
+
+                    <div class="create-account-container">
+                        <button type="button" class="resend-btn" id="back-to-step1" style="font-size: 14px;">Change Email Address</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- STEP 3: RESET PASSWORD -->
+            <div class="step-container" id="step-reset">
+                <div class="header-section">
+                    <h1 class="login-title">Reset Password</h1>
+                    <p class="header-subtitle">Create a strong new password for your account</p>
+                </div>
+
+                <form class="login-form" id="form-reset" novalidate>
+                    <!-- Password Input Group -->
+                    <div class="input-group password-group">
+                        <span class="input-icon left-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                            </svg>
+                        </span>
+                        <input type="password" id="password" name="Password" placeholder="New Password" required autocomplete="new-password">
+                        <button type="button" class="input-icon right-icon toggle-password" data-target="password" aria-label="Toggle password visibility">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="eye-open">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="eye-closed" style="display: none;">
+                                <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.82l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.74-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.34-2.07l3.18 3.18C15 10.58 15 10.29 15 10c0-1.66-1.34-3-3-3c-.29 0-.58 0-.91.13z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Password Strength Indicator -->
+                    <div class="password-strength-container" id="strength-container" style="display: none;">
+                        <div class="strength-bar-track">
+                            <div class="strength-bar-fill" id="strength-bar"></div>
+                        </div>
+                        <div class="strength-label">Password Strength: <span id="strength-text" style="font-weight: 700;">Weak</span></div>
+                        <div class="password-rules">
+                            <div class="rule-item invalid" id="rule-length">
+                                <span class="rule-icon">✗</span>
+                                <span class="rule-text">At least 8 characters</span>
+                            </div>
+                            <div class="rule-item invalid" id="rule-upper">
+                                <span class="rule-icon">✗</span>
+                                <span class="rule-text">One uppercase letter (A-Z)</span>
+                            </div>
+                            <div class="rule-item invalid" id="rule-number">
+                                <span class="rule-icon">✗</span>
+                                <span class="rule-text">One number (0-9)</span>
+                            </div>
+                            <div class="rule-item invalid" id="rule-special">
+                                <span class="rule-icon">✗</span>
+                                <span class="rule-text">One special character (!@#$ etc.)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirm Password Input Group -->
+                    <div class="input-group password-group">
+                        <span class="input-icon left-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                            </svg>
+                        </span>
+                        <input type="password" id="confirm-password" name="Confirm Password" placeholder="Confirm Password" required autocomplete="new-password">
+                        <button type="button" class="input-icon right-icon toggle-password" data-target="confirm-password" aria-label="Toggle password visibility">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="eye-open">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="eye-closed" style="display: none;">
+                                <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.82l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.74-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.34-2.07l3.18 3.18C15 10.58 15 10.29 15 10c0-1.66-1.34-3-3-3c-.29 0-.58 0-.91.13z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button type="submit" class="btn-signin" id="btn-reset">Update Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulated Email View Popup Overlay -->
+    <div class="email-simulator" id="email-simulator">
+        <div class="email-header">
+            <div class="email-title-group">
+                <span class="email-app-badge">Mail Simulator</span>
+                <span class="email-app-title">Incoming Verification Email</span>
+            </div>
+            <button type="button" class="email-close-btn" id="email-close-btn" aria-label="Close Email Alert">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="email-content">
+            <div class="email-meta">
+                <strong>From:</strong> security@hrm-portal.com<br>
+                <strong>To:</strong> <span id="sim-email-to">user@company.com</span><br>
+                <strong>Subject:</strong> Password Reset Verification Pin
+            </div>
+            <div class="email-body">
+                Hello Employee,<br>
+                A request has been made to reset your password. Use the following security code to complete your request:<br>
+                <div class="email-otp-highlight" id="sim-otp-code">000000</div><br>
+                <small style="color: #94a3b8; display: block; margin-top: 6px;">Note: This code expires in 2 minutes. Do not share this code.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal Overlay -->
+    <div class="modal-overlay" id="success-modal">
+        <div class="modal-card">
+            <div class="success-icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <h2 class="modal-title">Password Reset!</h2>
+            <p class="modal-desc">Your account password has been updated successfully. You can now log in using your new credentials.</p>
+            
+            <div class="countdown-container">
+                <div class="countdown-bar"></div>
+            </div>
+            <p class="redirect-text">Redirecting to Login Page in 3.5 seconds...</p>
+        </div>
+    </div>
+
+    <!-- OTP Sent Modal Overlay -->
+    <div class="modal-overlay" id="otp-sent-modal">
+        <div class="modal-card">
+            <div class="success-icon-wrapper" style="background-color: var(--primary-light); color: var(--primary);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36" fill="currentColor">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+            </div>
+            <h2 class="modal-title">OTP Mailed!</h2>
+            <p class="modal-desc" style="margin-bottom: 24px;">A 6-digit verification code has been successfully sent to your registered email address. Please check your inbox.</p>
+            <button type="button" class="btn-signin" id="otp-sent-close-btn" style="margin-bottom: 0;">OK</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Apply Auth Guard immediately (if logged in, go to dashboard)
+            HRMDatabase.requireNoAuth();
+
+            // Wire OTP Sent Modal close event
+            const otpSentCloseBtn = document.getElementById('otp-sent-close-btn');
+            const otpSentModal = document.getElementById('otp-sent-modal');
+            if (otpSentCloseBtn && otpSentModal) {
+                otpSentCloseBtn.addEventListener('click', () => {
+                    otpSentModal.classList.remove('active');
+                });
+            }
+
+            // Toggle Password Visibility Logic
+            const toggleButtons = document.querySelectorAll('.toggle-password');
+            toggleButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    const inputField = document.getElementById(targetId);
+                    const eyeOpen = btn.querySelector('.eye-open');
+                    const eyeClosed = btn.querySelector('.eye-closed');
+
+                    if (inputField && eyeOpen && eyeClosed) {
+                        const isPassword = inputField.getAttribute('type') === 'password';
+                        inputField.setAttribute('type', isPassword ? 'text' : 'password');
+                        
+                        if (isPassword) {
+                            eyeOpen.style.display = 'none';
+                            eyeClosed.style.display = 'block';
+                        } else {
+                            eyeOpen.style.display = 'block';
+                            eyeClosed.style.display = 'none';
+                        }
+                    }
+                });
+            });
+
+            // Inline Error Message Helpers
+            function showError(input, message) {
+                clearError(input); // Clear any existing error for this specific field
+
+                const group = input.closest('.input-group') || input.parentNode;
+                if (group) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error-message';
+                    errorDiv.innerHTML = `
+                        <span class="error-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                        </span>
+                        <span class="error-text">${message}</span>
+                    `;
+                    group.parentNode.insertBefore(errorDiv, group.nextSibling);
+                }
+            }
+
+            function clearError(input) {
+                const group = input.closest('.input-group') || input.parentNode;
+                if (group) {
+                    const nextEl = group.nextElementSibling;
+                    if (nextEl && nextEl.classList.contains('error-message')) {
+                        nextEl.remove();
+                    }
+                }
+            }
+
+            // Bind clear handlers to inputs
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', () => {
+                    clearError(input);
+                });
+            });
+
+            // State variables
+            let generatedOTP = '';
+            let registeredEmail = '';
+            let countdownInterval = null;
+
+            // Step transition helper
+            function switchStep(fromId, toId) {
+                const fromContainer = document.getElementById(fromId);
+                const toContainer = document.getElementById(toId);
+                
+                fromContainer.classList.remove('active');
+                setTimeout(() => {
+                    fromContainer.style.display = 'none';
+                    toContainer.style.display = 'block';
+                    setTimeout(() => {
+                        toContainer.classList.add('active');
+                    }, 50);
+                }, 300);
+            }
+
+            // Close Simulator Event
+            const closeSimBtn = document.getElementById('email-close-btn');
+            if (closeSimBtn) {
+                closeSimBtn.addEventListener('click', () => {
+                    document.getElementById('email-simulator').classList.remove('active');
+                });
+            }
+
+            // Step 1: Request OTP Submission
+            const formRequest = document.getElementById('form-request');
+            if (formRequest) {
+                formRequest.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const emailInput = document.getElementById('request-email');
+                    const email = emailInput.value.trim();
+
+                    if (!email) {
+                        showError(emailInput, 'Email Address is required');
+                        emailInput.focus();
+                        return;
+                    }
+
+                    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    if (!emailRegex.test(email)) {
+                        showError(emailInput, 'Please enter a valid email address');
+                        emailInput.focus();
+                        return;
+                    }
+
+                    // Show OTP loading text on button
+                    const reqBtn = document.getElementById('btn-request');
+                    const originalBtnText = reqBtn.textContent;
+                    reqBtn.disabled = true;
+                    reqBtn.textContent = 'Checking Records...';
+
+                    // Query the SQLite database for email presence
+                    const exists = await HRMDatabase.emailExists(email);
+                    if (!exists) {
+                        showError(emailInput, 'Email Address not found in records');
+                        emailInput.focus();
+                        reqBtn.disabled = false;
+                        reqBtn.textContent = originalBtnText;
+                        return;
+                    }
+
+                    // If valid, save email state and trigger OTP
+                    registeredEmail = email;
+                    document.getElementById('sent-email-target').textContent = email;
+                    
+                    reqBtn.textContent = 'Generating OTP...';
+
+                    try {
+                        await triggerOTPGeneration(email);
+                        reqBtn.disabled = false;
+                        reqBtn.textContent = originalBtnText;
+                        
+                        // Switch Step 1 -> Step 2
+                        switchStep('step-request', 'step-verify');
+                        setTimeout(() => {
+                            otpFields[0].focus();
+                        }, 400);
+                    } catch (err) {
+                        console.error('OTP trigger failure:', err);
+                        showError(emailInput, 'Failed to dispatch code. Please try again.');
+                        reqBtn.disabled = false;
+                        reqBtn.textContent = originalBtnText;
+                    }
+                });
+            }
+
+            // Trigger simulated OTP and countdown timers
+            async function triggerOTPGeneration(email) {
+                const result = await HRMDatabase.sendOTP(email);
+                
+                if (!result.success) {
+                    throw new Error(result.message);
+                }
+
+                // If SMTP is unconfigured, backend supplies code in devOtp
+                generatedOTP = result.smtpConfigured ? 'SMTP_VERIFIED_ON_BACKEND' : result.devOtp;
+                
+                // Set simulator details
+                document.getElementById('sim-email-to').textContent = email;
+
+                const simBody = document.querySelector('#email-simulator .email-body');
+                const appBadge = document.querySelector('#email-simulator .email-app-badge');
+                
+                if (!result.smtpConfigured) {
+                    // SMTP unconfigured - display local simulator popup with actual OTP
+                    appBadge.textContent = 'Mail Simulator';
+                    appBadge.style.backgroundColor = 'var(--primary)';
+                    document.getElementById('sim-otp-code').textContent = result.devOtp;
+                    simBody.innerHTML = `
+                        Hello Employee,<br>
+                        A request has been made to reset your password. Use the following security code to complete your request:<br>
+                        <div class="email-otp-highlight" id="sim-otp-code">${result.devOtp}</div><br>
+                        <small style="color: #94a3b8; display: block; margin-top: 6px;">Note: This code expires in 5 minutes. Do not share this code.</small>
+                    `;
+                    
+                    // Fire Simulator Toast Banner
+                    const sim = document.getElementById('email-simulator');
+                    sim.classList.remove('active');
+                    setTimeout(() => {
+                        sim.classList.add('active');
+                    }, 100);
+                } else {
+                    // SMTP is configured - show custom popup modal
+                    const sentModal = document.getElementById('otp-sent-modal');
+                    if (sentModal) {
+                        sentModal.classList.add('active');
+                    }
+                }
+
+                // Run Live countdown timer
+                startTimer(300);
+            }
+
+            // Live Timer Countdowns
+            function startTimer(seconds) {
+                if (countdownInterval) clearInterval(countdownInterval);
+
+                const timerVal = document.getElementById('timer');
+                const timerText = timerVal.closest('.timer-text');
+                const resendBtn = document.getElementById('resend-btn');
+
+                resendBtn.disabled = true;
+                timerText.classList.remove('danger');
+
+                let timeRemaining = seconds;
+
+                const runCountdown = () => {
+                    const minutes = Math.floor(timeRemaining / 60);
+                    const secs = timeRemaining % 60;
+                    timerVal.textContent = `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+                    if (timeRemaining <= 15) {
+                        timerText.classList.add('danger');
+                    }
+
+                    if (timeRemaining <= 0) {
+                        clearInterval(countdownInterval);
+                        generatedOTP = 'EXPIRED_CODE'; // Invalidate active OTP
+                        timerVal.textContent = 'Expired';
+                        resendBtn.disabled = false;
+                    }
+                    timeRemaining--;
+                };
+
+                runCountdown();
+                countdownInterval = setInterval(runCountdown, 1000);
+            }
+
+            // Resend Code Click Handler
+            const resendBtn = document.getElementById('resend-btn');
+            if (resendBtn) {
+                resendBtn.addEventListener('click', async () => {
+                    resendBtn.disabled = true;
+                    try {
+                        await triggerOTPGeneration(registeredEmail);
+                    } catch (err) {
+                        console.error('OTP resend failure:', err);
+                        showError(otpErrAnchor, 'Failed to resend code. Please try again.');
+                        resendBtn.disabled = false;
+                    }
+                });
+            }
+
+            // Switch Emails button (Back to Step 1)
+            const changeEmailBtn = document.getElementById('back-to-step1');
+            if (changeEmailBtn) {
+                changeEmailBtn.addEventListener('click', () => {
+                    if (countdownInterval) clearInterval(countdownInterval);
+                    document.getElementById('email-simulator').classList.remove('active');
+                    switchStep('step-verify', 'step-request');
+                });
+            }
+
+            // OTP Input focus management
+            const otpFields = document.querySelectorAll('.otp-field');
+            const otpErrAnchor = document.getElementById('otp-error-anchor');
+
+            otpFields.forEach((field, index) => {
+                field.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    e.target.value = val.replace(/[^0-9]/g, ''); // Numeric digit values only
+                    
+                    clearError(otpErrAnchor); // Clear errors as they correct details
+
+                    if (e.target.value && index < otpFields.length - 1) {
+                        otpFields[index + 1].focus();
+                    }
+                });
+
+                field.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !field.value && index > 0) {
+                        otpFields[index - 1].focus();
+                    }
+                });
+            });
+
+            // Form Step 2: OTP Verification
+            const formVerify = document.getElementById('form-verify');
+            if (formVerify) {
+                formVerify.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    let codeEntered = '';
+                    otpFields.forEach(field => {
+                        codeEntered += field.value;
+                    });
+
+                    if (codeEntered.length < 6) {
+                        showError(otpErrAnchor, 'Please fill in all 6 verification digits');
+                        return;
+                    }
+
+                    if (generatedOTP === 'EXPIRED_CODE') {
+                        showError(otpErrAnchor, 'Verification code has expired. Please click Resend Code.');
+                        return;
+                    }
+
+                    const verifyBtn = document.getElementById('btn-verify');
+                    const originalBtnText = verifyBtn.textContent;
+                    verifyBtn.disabled = true;
+                    verifyBtn.textContent = 'Verifying Code...';
+
+                    // Verify OTP against Express API
+                    const result = await HRMDatabase.verifyOTP(registeredEmail, codeEntered);
+                    
+                    if (!result.success) {
+                        showError(otpErrAnchor, result.message);
+                        otpFields.forEach(f => f.value = '');
+                        otpFields[0].focus();
+                        verifyBtn.disabled = false;
+                        verifyBtn.textContent = originalBtnText;
+                        return;
+                    }
+
+                    // Save verified code state for resetting
+                    let verifiedOTPCode = codeEntered;
+
+                    // Verification Successful
+                    if (countdownInterval) clearInterval(countdownInterval);
+                    document.getElementById('email-simulator').classList.remove('active');
+
+                    setTimeout(() => {
+                        verifyBtn.disabled = false;
+                        verifyBtn.textContent = originalBtnText;
+                        
+                        // Switch Step 2 -> Step 3
+                        switchStep('step-verify', 'step-reset');
+                        
+                        // Wire password reset handler with verified code closures
+                        const formReset = document.getElementById('form-reset');
+                        if (formReset) {
+                            // Clear any existing listeners
+                            const newFormReset = formReset.cloneNode(true);
+                            formReset.parentNode.replaceChild(newFormReset, formReset);
+                            
+                            // Wire Password Strength Tracker for cloned Reset Page
+                            const passwordField = newFormReset.querySelector('#password');
+                            const strengthContainer = newFormReset.querySelector('#strength-container');
+                            const strengthBar = newFormReset.querySelector('#strength-bar');
+                            const strengthText = newFormReset.querySelector('#strength-text');
+                            
+                            const ruleLength = newFormReset.querySelector('#rule-length');
+                            const ruleUpper = newFormReset.querySelector('#rule-upper');
+                            const ruleNumber = newFormReset.querySelector('#rule-number');
+                            const ruleSpecial = newFormReset.querySelector('#rule-special');
+
+                            function updatePasswordStrength(val) {
+                                if (!val) {
+                                    strengthContainer.style.display = 'none';
+                                    return 0;
+                                }
+
+                                strengthContainer.style.display = 'block';
+
+                                const criteria = {
+                                    length: val.length >= 8,
+                                    upper: /[A-Z]/.test(val),
+                                    number: /[0-9]/.test(val),
+                                    special: /[!@#$%^&*(),.?":{}|<>]/.test(val)
+                                };
+
+                                const updateRuleUI = (element, isValid) => {
+                                    const icon = element.querySelector('.rule-icon');
+                                    if (isValid) {
+                                        element.className = 'rule-item valid';
+                                        icon.textContent = '✓';
+                                    } else {
+                                        element.className = 'rule-item invalid';
+                                        icon.textContent = '✗';
+                                    }
+                                };
+
+                                updateRuleUI(ruleLength, criteria.length);
+                                updateRuleUI(ruleUpper, criteria.upper);
+                                updateRuleUI(ruleNumber, criteria.number);
+                                updateRuleUI(ruleSpecial, criteria.special);
+
+                                let score = 0;
+                                if (criteria.length) score++;
+                                if (criteria.upper) score++;
+                                if (criteria.number) score++;
+                                if (criteria.special) score++;
+
+                                strengthBar.className = 'strength-bar-fill';
+
+                                if (score <= 1) {
+                                    strengthBar.classList.add('weak');
+                                    strengthText.textContent = 'Weak';
+                                    strengthText.style.color = '#ef4444';
+                                } else if (score === 2) {
+                                    strengthBar.classList.add('medium');
+                                    strengthText.textContent = 'Medium';
+                                    strengthText.style.color = '#f59e0b';
+                                } else if (score === 3) {
+                                    strengthBar.classList.add('strong');
+                                    strengthText.textContent = 'Strong';
+                                    strengthText.style.color = '#10b981';
+                                } else if (score === 4) {
+                                    strengthBar.classList.add('very-strong');
+                                    strengthText.textContent = 'Very Strong';
+                                    strengthText.style.color = 'var(--primary)';
+                                }
+
+                                return score;
+                            }
+
+                            if (passwordField) {
+                                passwordField.addEventListener('input', (e) => {
+                                    updatePasswordStrength(e.target.value);
+                                });
+                            }
+                            
+                            // Re-bind password toggle handlers for cloned node
+                            newFormReset.querySelectorAll('.toggle-password').forEach(btn => {
+                                btn.addEventListener('click', () => {
+                                    const targetId = btn.getAttribute('data-target');
+                                    const inputField = document.getElementById(targetId);
+                                    const eyeOpen = btn.querySelector('.eye-open');
+                                    const eyeClosed = btn.querySelector('.eye-closed');
+
+                                    if (inputField && eyeOpen && eyeClosed) {
+                                        const isPassword = inputField.getAttribute('type') === 'password';
+                                        inputField.setAttribute('type', isPassword ? 'text' : 'password');
+                                        
+                                        if (isPassword) {
+                                            eyeOpen.style.display = 'none';
+                                            eyeClosed.style.display = 'block';
+                                        } else {
+                                            eyeOpen.style.display = 'block';
+                                            eyeClosed.style.display = 'none';
+                                        }
+                                    }
+                                });
+                            });
+
+                            // Re-bind input clear error handlers
+                            newFormReset.querySelectorAll('input').forEach(input => {
+                                input.addEventListener('input', () => {
+                                    clearError(input);
+                                });
+                            });
+
+                            newFormReset.addEventListener('submit', async (ev) => {
+                                ev.preventDefault();
+                                
+                                const newPasswordInput = newFormReset.querySelector('#password');
+                                const confirmPasswordInput = newFormReset.querySelector('#confirm-password');
+
+                                const newPassword = newPasswordInput.value;
+                                const confirmPassword = confirmPasswordInput.value;
+
+                                let hasError = false;
+
+                                if (!newPassword.trim()) {
+                                    showError(newPasswordInput, 'New Password is required');
+                                    newPasswordInput.focus();
+                                    hasError = true;
+                                } else {
+                                    const score = updatePasswordStrength(newPassword);
+                                    if (score < 4) {
+                                        showError(newPasswordInput, 'Password must satisfy all complexity rules');
+                                        newPasswordInput.focus();
+                                        hasError = true;
+                                    }
+                                }
+
+                                if (!confirmPassword.trim()) {
+                                    showError(confirmPasswordInput, 'Confirm Password is required');
+                                    if (!hasError) confirmPasswordInput.focus();
+                                    hasError = true;
+                                } else if (newPassword !== confirmPassword) {
+                                    showError(confirmPasswordInput, 'Passwords do not match');
+                                    if (!hasError) confirmPasswordInput.focus();
+                                    hasError = true;
+                                }
+
+                                if (!hasError) {
+                                    const resetBtn = newFormReset.querySelector('#btn-reset');
+                                    resetBtn.disabled = true;
+                                    resetBtn.textContent = 'Resetting Password...';
+
+                                    try {
+                                        const resetResult = await HRMDatabase.resetPassword(registeredEmail, newPassword, verifiedOTPCode);
+                                        if (resetResult.success) {
+                                            // Show success modal & countdown redirect
+                                            const modal = document.getElementById('success-modal');
+                                            modal.classList.add('active');
+
+                                            setTimeout(() => {
+                                                window.location.href = 'login.html';
+                                            }, 3500);
+                                        } else {
+                                            showError(newPasswordInput, resetResult.message);
+                                            resetBtn.disabled = false;
+                                            resetBtn.textContent = 'Update Password';
+                                        }
+                                    } catch (err) {
+                                        console.error('Password reset failure:', err);
+                                        showError(newPasswordInput, 'Failed to update password. Please try again.');
+                                        resetBtn.disabled = false;
+                                        resetBtn.textContent = 'Update Password';
+                                    }
+                                }
+                            });
+                        }
+                    }, 800);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

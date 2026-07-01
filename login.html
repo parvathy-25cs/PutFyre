@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Secure portal login page for the HRM employee portal. Access your workspace and manage your dashboard.">
+    <title>Login - HRM</title>
+    <link rel="icon" type="image/png" href="PutFyre.png">
+    <link rel="stylesheet" href="css.css">
+    <script src="db.js"></script>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-card">
+            <!-- Logo Section -->
+            <div class="logo-container">
+                <img src="PutFyre.png" alt="HRM Logo" class="logo-icon">
+                <span class="logo-text">HRM</span>
+            </div>
+
+            <!-- Header Section -->
+            <div class="header-section">
+                <h1 class="login-title">Welcome Back</h1>
+                <p class="header-subtitle">Enter your credentials to access the employee portal</p>
+            </div>
+
+            <!-- Server Connection Status Banner -->
+            <div id="server-status-banner" class="server-status connecting">
+                <span id="server-status-dot" class="status-dot"></span>
+                <span id="server-status-text">Connecting to server...</span>
+            </div>
+
+            <!-- Form -->
+            <form class="login-form" novalidate>
+                <!-- Employee ID Input -->
+                <div class="input-group">
+                    <input type="text" name="Employee ID" placeholder="Employee ID" required autocomplete="username">
+                </div>
+
+                <!-- Password Input Group -->
+                <div class="input-group password-group">
+                    <span class="input-icon left-icon">
+                        <!-- SVG Lock Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                    </span>
+                    <input type="password" id="password" name="Password" placeholder="Password" required autocomplete="current-password">
+                    <button type="button" class="input-icon right-icon toggle-password" aria-label="Toggle password visibility">
+                        <!-- SVG Eye Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="eye-open">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                        <!-- SVG Eye Slashed Icon (hidden by default) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="eye-closed" style="display: none;">
+                            <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.82l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.74-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.34-2.07l3.18 3.18C15 10.58 15 10.29 15 10c0-1.66-1.34-3-3-3c-.29 0-.58 0-.91.13z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Forgot Password Link -->
+                <div class="form-actions">
+                    <a href="forgot.html" class="forgot-link">Forgot Password?</a>
+                </div>
+
+                <!-- Sign In Button -->
+                <button type="submit" class="btn-signin">Sign In</button>
+
+                <!-- Create Account Link -->
+                <div class="create-account-container">
+                    <a href="register.html" class="create-link">Don't have an account? <span class="link-highlight">Sign Up</span></a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toggle Password Visibility & Custom Form Validation Logic -->
+    <script>
+        // ── Server Connection Status Check ──────────────────────────
+        (function checkServerConnection() {
+            const banner = document.getElementById('server-status-banner');
+            const text   = document.getElementById('server-status-text');
+            const form   = document.querySelector('.login-form');
+            let attempts = 0;
+            let connected = false;
+
+            function setStatus(state, message) {
+                banner.className = 'server-status ' + state;
+                text.textContent = message;
+            }
+
+            async function ping() {
+                try {
+                    const ctrl = new AbortController();
+                    const timer = setTimeout(() => ctrl.abort(), 3000);
+                    await fetch('http://localhost:3000/api/check-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: '__ping__' }),
+                        signal: ctrl.signal
+                    });
+                    clearTimeout(timer);
+                    // Any response (even 400) means server is up
+                    if (!connected) {
+                        connected = true;
+                        setStatus('connected', 'Server connected ✓');
+                        if (form) form.style.pointerEvents = '';
+                        // Auto-hide banner after 3 seconds
+                        setTimeout(() => {
+                            banner.style.opacity = '0';
+                            setTimeout(() => { banner.style.display = 'none'; }, 400);
+                        }, 3000);
+                    }
+                } catch (err) {
+                    attempts++;
+                    if (attempts === 1) {
+                        setStatus('connecting', 'Starting server, please wait...');
+                        if (form) form.style.pointerEvents = 'none';
+                    } else if (attempts >= 15) {
+                        setStatus('error', 'Cannot reach server — run start.bat to launch it');
+                        if (form) form.style.pointerEvents = '';
+                        return; // Stop retrying
+                    }
+                    setTimeout(ping, 2000);
+                }
+            }
+
+            // Disable form until server responds on first load
+            if (form) form.style.pointerEvents = 'none';
+            ping();
+        })();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Toggle Password Visibility Logic
+            const toggleBtn = document.querySelector('.toggle-password');
+            const passwordInput = document.getElementById('password');
+            const eyeOpen = document.querySelector('.eye-open');
+            const eyeClosed = document.querySelector('.eye-closed');
+
+            if (toggleBtn && passwordInput) {
+                toggleBtn.addEventListener('click', () => {
+                    const isPassword = passwordInput.getAttribute('type') === 'password';
+                    passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                    
+                    if (isPassword) {
+                        eyeOpen.style.display = 'none';
+                        eyeClosed.style.display = 'block';
+                    } else {
+                        eyeOpen.style.display = 'block';
+                        eyeClosed.style.display = 'none';
+                    }
+                });
+            }
+
+            // Inline Error Message Handlers
+            function showError(input, message) {
+                clearError(input); // Clear any existing error for this specific field
+
+                const group = input.closest('.input-group');
+                if (group) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error-message';
+                    errorDiv.innerHTML = `
+                        <span class="error-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                        </span>
+                        <span class="error-text">${message}</span>
+                    `;
+                    // Insert error right after the input-group container
+                    group.parentNode.insertBefore(errorDiv, group.nextSibling);
+                }
+            }
+
+            function clearError(input) {
+                const group = input.closest('.input-group');
+                if (group) {
+                    const nextEl = group.nextElementSibling;
+                    if (nextEl && nextEl.classList.contains('error-message')) {
+                        nextEl.remove();
+                    }
+                }
+            }
+
+            // Form Submit Interceptor for Custom Validation
+            const form = document.querySelector('.login-form');
+            if (form) {
+                const inputs = form.querySelectorAll('input[required]');
+
+                // Proactively clear error when user types inside field
+                inputs.forEach(input => {
+                    input.addEventListener('input', () => {
+                        clearError(input);
+                    });
+                });
+
+                 // Guard: Redirect to dashboard if already authenticated
+                 HRMDatabase.requireNoAuth();
+
+                 form.addEventListener('submit', async (e) => {
+                     e.preventDefault();
+                     let hasError = false;
+
+                     // Validate all fields in reverse order to ensure first empty field retains focus
+                     for (let i = inputs.length - 1; i >= 0; i--) {
+                         const input = inputs[i];
+                         if (!input.value.trim()) {
+                             const fieldName = input.getAttribute('placeholder') || input.getAttribute('name') || 'Field';
+                             showError(input, `${fieldName} is required`);
+                             input.focus();
+                             hasError = true;
+                         }
+                     }
+
+                     if (!hasError) {
+                         const idInput = form.querySelector('input[name="Employee ID"]');
+                         const passwordInput = document.getElementById('password');
+
+                         const identifier = idInput.value;
+                         const password = passwordInput.value;
+
+                         // Disable button & show loading state
+                         const submitBtn = form.querySelector('button[type="submit"]');
+                         const originalBtnText = submitBtn.textContent;
+                         submitBtn.disabled = true;
+                         submitBtn.textContent = 'Verifying...';
+
+                         try {
+                             const result = await HRMDatabase.loginUser(identifier, password);
+
+                             if (!result.success) {
+                                 submitBtn.disabled = false;
+                                 submitBtn.textContent = originalBtnText;
+
+                                 if (result.message.toLowerCase().includes('password')) {
+                                     showError(passwordInput, result.message);
+                                     passwordInput.focus();
+                                 } else {
+                                     showError(idInput, result.message);
+                                     idInput.focus();
+                                 }
+                             } else {
+                                 // Display toast welcome message
+                                 document.getElementById('toast-welcome-msg').textContent = `Welcome back, ${result.user.name}!`;
+                                 const toast = document.getElementById('toast-success');
+                                 toast.classList.add('active');
+
+                                 // Redirect to dashboard after 1.5 seconds
+                                 setTimeout(() => {
+                                     window.location.href = 'dashboard.html';
+                                 }, 1500);
+                             }
+                         } catch (error) {
+                             console.error('Login error:', error);
+                             showError(idInput, 'An unexpected error occurred. Please try again.');
+                             submitBtn.disabled = false;
+                             submitBtn.textContent = originalBtnText;
+                         }
+                     }
+                 });
+            }
+        });
+    </script>
+
+    <!-- Toast Success Notification -->
+    <div class="toast-notification" id="toast-success">
+        <div class="toast-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+        </div>
+        <div class="toast-content">
+            <span class="toast-title">Login Successful</span>
+            <span class="toast-message" id="toast-welcome-msg">Welcome back!</span>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HRM Dashboard – View your leave summary, attendance, payslips, and more in one place.">
+    <title>Dashboard - HRM</title>
+    <link rel="icon" type="image/png" href="PutFyre.png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <script src="db.js"></script>
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #700b5d;
+            --primary-dark: #59084a;
+            --primary-light: rgba(112, 11, 93, 0.08);
+            --sidebar-bg: #3d0a30;
+            --sidebar-hover: rgba(255,255,255,0.08);
+            --sidebar-active: rgba(255,255,255,0.15);
+            --text-dark: #1f2937;
+            --text-mid: #4b5563;
+            --text-muted: #9ca3af;
+            --bg-page: #f5eef4;
+            --bg-card: #ffffff;
+            --border: #e5e7eb;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+            --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            --font: 'Inter', -apple-system, sans-serif;
+        }
+
+        html, body { height: 100%; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-page);
+            display: flex;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 220px;
+            min-height: 100vh;
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+            box-shadow: 4px 0 24px rgba(61,10,48,0.18);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 22px 20px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .sidebar-logo img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+        }
+
+        .sidebar-logo-text {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 14px 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 20px;
+            color: rgba(255,255,255,0.65);
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            border-radius: 0;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: var(--sidebar-hover);
+            color: #ffffff;
+        }
+
+        .nav-item.active {
+            background: var(--sidebar-active);
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 4px;
+            bottom: 4px;
+            width: 3px;
+            background: #ff7acf;
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            opacity: 0.85;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ===== TOPBAR ===== */
+        .topbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 360px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            height: 36px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 0 16px 0 36px;
+            font-size: 13px;
+            color: var(--text-dark);
+            font-family: var(--font);
+            background: #fafafa;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-bar input:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(112,11,93,0.1);
+        }
+
+        .search-bar svg {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 15px;
+            height: 15px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .topbar-icon-btn {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: #fafafa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-mid);
+            transition: var(--transition);
+        }
+
+        .topbar-icon-btn:hover { background: var(--primary-light); color: var(--primary); }
+
+        .topbar-icon-btn svg { width: 17px; height: 17px; }
+
+        .notif-dot {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 2px solid #fff;
+        }
+
+        .topbar-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid rgba(112,11,93,0.2);
+        }
+
+        /* ===== PAGE BODY ===== */
+        .page-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: grid;
+            grid-template-columns: 1fr 220px;
+            grid-template-rows: auto;
+            gap: 16px;
+            align-content: start;
+        }
+
+        /* ===== LEFT COLUMN ===== */
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-width: 0;
+        }
+
+        /* ===== RIGHT COLUMN ===== */
+        .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .card-action-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .card-action-btn:hover { background: var(--primary); color: #fff; }
+        .card-action-btn svg { width: 13px; height: 13px; }
+
+        /* ===== LEAVE SUMMARY PILLS ===== */
+        .leave-pills {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .leave-pill {
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+            transition: var(--transition);
+        }
+
+        .leave-pill:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+        .leave-pill.pink { background: #fff0f6; border: 1px solid #ffcce0; }
+        .leave-pill.blue { background: #f0f4ff; border: 1px solid #c7d5ff; }
+        .leave-pill.purple { background: #f5f0ff; border: 1px solid #d0baff; }
+        .leave-pill.lavender { background: #eff3ff; border: 1px solid #bdc8ff; }
+
+        .leave-pill-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .leave-pill.pink .leave-pill-icon { background: #ffb3d1; }
+        .leave-pill.blue .leave-pill-icon { background: #a8bdff; }
+        .leave-pill.purple .leave-pill-icon { background: #c4aaff; }
+        .leave-pill.lavender .leave-pill-icon { background: #9eaaff; }
+
+        .leave-pill-icon svg { width: 18px; height: 18px; color: #fff; }
+
+        .leave-pill-info { flex: 1; min-width: 0; }
+
+        .leave-pill-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .leave-pill-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-dark);
+            line-height: 1.2;
+        }
+
+        .leave-pill-unit {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: block;
+        }
+
+        /* ===== DATE RANGE OVERVIEW CHART ===== */
+        .overview-card { padding: 14px; }
+
+        .overview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .overview-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .tab-group {
+            display: flex;
+            gap: 2px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 3px;
+        }
+
+        .tab-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-muted);
+            transition: var(--transition);
+            font-family: var(--font);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(112,11,93,0.25);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 160px;
+        }
+
+        /* ===== SALARY ROW ===== */
+        .salary-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .salary-box {
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            background: #fff;
+        }
+
+        .salary-box:hover { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(112,11,93,0.07); }
+
+        .salary-box-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .salary-box-icon svg { width: 17px; height: 17px; color: var(--primary); }
+
+        .salary-box-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .salary-box-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        /* ===== BOTTOM ROW ===== */
+        .bottom-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* ===== TICKETS CARD ===== */
+        .tickets-body {
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .donut-container {
+            width: 110px;
+            height: 110px;
+            flex-shrink: 0;
+        }
+
+        .ticket-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11.5px;
+            font-weight: 500;
+            color: var(--text-mid);
+        }
+
+        .legend-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ===== LEAVE REQUESTS CARD ===== */
+        .leave-req-body {
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .leave-req-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .leave-req-row:last-child { border-bottom: none; }
+
+        .leave-req-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-mid);
+        }
+
+        .leave-req-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .leave-req-icon.green { background: #dcfce7; color: #16a34a; }
+        .leave-req-icon.orange { background: #fff7ed; color: #ea580c; }
+        .leave-req-icon.gray { background: #f3f4f6; color: #6b7280; }
+        .leave-req-icon.red { background: #fef2f2; color: #dc2626; }
+
+        .leave-req-icon svg { width: 11px; height: 11px; }
+
+        .leave-req-count {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .lop-banner {
+            margin-top: 6px;
+            background: linear-gradient(135deg, #fdf4ff, #f5eef4);
+            border: 1px solid rgba(112,11,93,0.15);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .lop-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .lop-label svg { width: 13px; height: 13px; }
+
+        .lop-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        /* ===== RIGHT PANEL CARDS ===== */
+        .panel-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .panel-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .panel-card-body { padding: 8px 12px; }
+
+        /* Holidays */
+        .holiday-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 11.5px;
+        }
+
+        .holiday-item:last-child { border-bottom: none; }
+
+        .holiday-name {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .holiday-date {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        /* Projects */
+        .project-item {
+            padding: 7px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .project-item:last-child { border-bottom: none; }
+
+        .project-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 3px;
+        }
+
+        .project-deadline {
+            font-size: 10.5px;
+            color: #dc2626;
+            font-weight: 500;
+        }
+
+        /* Birthdays */
+        .birthday-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 6px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .birthday-item:last-child { border-bottom: none; }
+
+        .birthday-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .birthday-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .birthday-event {
+            font-size: 10.5px;
+            color: var(--text-muted);
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: fadeSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .animate-in:nth-child(1) { animation-delay: 0.05s; }
+        .animate-in:nth-child(2) { animation-delay: 0.10s; }
+        .animate-in:nth-child(3) { animation-delay: 0.15s; }
+        .animate-in:nth-child(4) { animation-delay: 0.20s; }
+
+        /* ===== SCROLLBAR ===== */
+        .page-body::-webkit-scrollbar { width: 5px; }
+        .page-body::-webkit-scrollbar-track { background: transparent; }
+        .page-body::-webkit-scrollbar-thumb { background: rgba(112,11,93,0.2); border-radius: 10px; }
+        .sidebar-nav::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar" role="navigation" aria-label="Main Navigation">
+    <div class="sidebar-logo">
+        <img src="PutFyre.png" alt="HRM Logo" id="sidebar-logo-img" onerror="this.style.display='none'">
+        <span class="sidebar-logo-text">HRM</span>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a class="nav-item active" href="dashboard.html" id="nav-dashboard" aria-current="page">
+            <!-- Dashboard icon -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            Dashboard
+        </a>
+        <a class="nav-item" href="#" id="nav-attendance">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Attendance
+        </a>
+        <a class="nav-item" href="#" id="nav-payslips">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Payslips
+        </a>
+        <a class="nav-item" href="#" id="nav-holidays">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Holidays View
+        </a>
+        <a class="nav-item" href="#" id="nav-permission">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Permission
+        </a>
+        <a class="nav-item" href="#" id="nav-claim">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Claim
+        </a>
+        <a class="nav-item" href="#" id="nav-ticket">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+            </svg>
+            Ticket Raise
+        </a>
+        <a class="nav-item" href="#" id="nav-performance">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Performance
+        </a>
+    </nav>
+</aside>
+
+<!-- ===================== MAIN CONTENT ===================== -->
+<div class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar" role="banner">
+        <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="topbar-search" placeholder="Search …" aria-label="Search">
+        </div>
+
+        <div class="topbar-right">
+            <button class="topbar-icon-btn" id="notif-btn" aria-label="Notifications">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <span class="notif-dot" aria-label="3 new notifications"></span>
+            </button>
+            <div class="topbar-avatar" id="topbar-avatar" aria-label="User menu">JD</div>
+        </div>
+    </header>
+
+    <!-- PAGE BODY -->
+    <main class="page-body" id="page-body">
+
+        <!-- ====== LEFT COLUMN ====== -->
+        <div class="left-col">
+
+            <!-- 1. Leave Summary Pills -->
+            <div class="leave-pills">
+                <div class="leave-pill pink animate-in" id="pill-mal">
+                    <div class="leave-pill-icon">
+                        <!-- calendar icon -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <div class="leave-pill-info">
+                        <span class="leave-pill-label">Monthly AL</span>
+                        <div class="leave-pill-value" id="val-mal">10 <span class="leave-pill-unit">Days</span></div>
+                    </div>
+                </div>
+
+                <div class="leave-pill blue animate-in" id="pill-mcl">
+                    <div class="leave-pill-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <div class="leave-pill-info">
+                        <span class="leave-pill-label">Monthly CL</span>
+                        <div class="leave-pill-value" id="val-mcl">24 <span class="leave-pill-unit">Days</span></div>
+                    </div>
+                </div>
+
+                <div class="leave-pill purple animate-in" id="pill-yal">
+                    <div class="leave-pill-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <div class="leave-pill-info">
+                        <span class="leave-pill-label">Yearly AL</span>
+                        <div class="leave-pill-value" id="val-yal">5 <span class="leave-pill-unit">Days</span></div>
+                    </div>
+                </div>
+
+                <div class="leave-pill lavender animate-in" id="pill-ycl">
+                    <div class="leave-pill-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <div class="leave-pill-info">
+                        <span class="leave-pill-label">Yearly CL</span>
+                        <div class="leave-pill-value" id="val-ycl">12 <span class="leave-pill-unit">Days</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Date Range Overview Chart -->
+            <div class="card overview-card animate-in">
+                <div class="overview-header">
+                    <span class="overview-title">Date Range Overview</span>
+                    <div class="tab-group" role="group" aria-label="Chart period">
+                        <button class="tab-btn active" id="tab-yearly" onclick="switchTab('yearly')">Yearly</button>
+                        <button class="tab-btn" id="tab-monthly" onclick="switchTab('monthly')">Monthly</button>
+                        <button class="tab-btn" id="tab-custom" onclick="switchTab('custom')">Custom</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="overviewChart" aria-label="Date range overview chart"></canvas>
+                </div>
+            </div>
+
+            <!-- 3. Salary Row -->
+            <div class="salary-row animate-in">
+                <div class="salary-box" id="salary-current">
+                    <div class="salary-box-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="1" x2="12" y2="23"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="salary-box-label">Current Salary</div>
+                        <div class="salary-box-value" id="val-salary">₹ 2.5 LPA</div>
+                    </div>
+                </div>
+
+                <div class="salary-box" id="salary-last">
+                    <div class="salary-box-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="salary-box-label">Last Review</div>
+                        <div class="salary-box-value" id="val-last-review">15-06-2026</div>
+                    </div>
+                </div>
+
+                <div class="salary-box" id="salary-next">
+                    <div class="salary-box-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                            <polyline points="9 14 11 16 15 12"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="salary-box-label">Next Review</div>
+                        <div class="salary-box-value" id="val-next-review">15-06-2027</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Bottom Row: Tickets + Leave Requests -->
+            <div class="bottom-row animate-in">
+
+                <!-- Tickets Card -->
+                <div class="card" id="tickets-card">
+                    <div class="card-header">
+                        <span class="card-title">Tickets</span>
+                        <button class="card-action-btn" aria-label="View all tickets">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                    </div>
+                    <div class="tickets-body">
+                        <div class="donut-container">
+                            <canvas id="ticketsChart" aria-label="Tickets breakdown donut chart"></canvas>
+                        </div>
+                        <div class="ticket-legend">
+                            <div class="legend-item"><span class="legend-dot" style="background:#ff6b9d;"></span>Open</div>
+                            <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span>On Hold</div>
+                            <div class="legend-item"><span class="legend-dot" style="background:#3b82f6;"></span>In Progress</div>
+                            <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span>Solved</div>
+                            <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6;"></span>Closed</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leave Requests Card -->
+                <div class="card" id="leave-requests-card">
+                    <div class="card-header">
+                        <span class="card-title">Leave Requests</span>
+                        <button class="card-action-btn" aria-label="View all leave requests">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                    </div>
+                    <div class="leave-req-body">
+                        <div class="leave-req-row">
+                            <div class="leave-req-left">
+                                <span class="leave-req-icon green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </span>
+                                Approved Leaves
+                            </div>
+                            <span class="leave-req-count" id="leave-approved">4</span>
+                        </div>
+                        <div class="leave-req-row">
+                            <div class="leave-req-left">
+                                <span class="leave-req-icon orange">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                </span>
+                                Pending Leaves
+                            </div>
+                            <span class="leave-req-count" id="leave-pending">1</span>
+                        </div>
+                        <div class="leave-req-row">
+                            <div class="leave-req-left">
+                                <span class="leave-req-icon gray">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </span>
+                                Cancelled Leaves
+                            </div>
+                            <span class="leave-req-count" id="leave-cancelled">2</span>
+                        </div>
+                        <div class="leave-req-row">
+                            <div class="leave-req-left">
+                                <span class="leave-req-icon red">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </span>
+                                Rejected Leaves
+                            </div>
+                            <span class="leave-req-count" id="leave-rejected">1</span>
+                        </div>
+
+                        <div class="lop-banner">
+                            <div class="lop-label">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                                    <line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                                APR 26 – LOP
+                            </div>
+                            <div class="lop-value" id="lop-days">3 Days</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /left-col -->
+
+        <!-- ====== RIGHT COLUMN ====== -->
+        <div class="right-col">
+
+            <!-- Upcoming Holidays -->
+            <div class="panel-card animate-in" id="holidays-panel">
+                <div class="panel-card-header">
+                    <span class="panel-card-title">Upcoming Holidays</span>
+                    <button class="card-action-btn" aria-label="View all holidays">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="panel-card-body">
+                    <div class="holiday-item">
+                        <span class="holiday-name">Labor Day</span>
+                        <span class="holiday-date">Sep 2, 2026</span>
+                    </div>
+                    <div class="holiday-item">
+                        <span class="holiday-name">Independence Day</span>
+                        <span class="holiday-date">Aug 15, 2026</span>
+                    </div>
+                    <div class="holiday-item">
+                        <span class="holiday-name">Good Friday</span>
+                        <span class="holiday-date">Apr 3, 2026</span>
+                    </div>
+                    <div class="holiday-item">
+                        <span class="holiday-name">Tamil Newyear</span>
+                        <span class="holiday-date">Apr 14, 2026</span>
+                    </div>
+                    <div class="holiday-item">
+                        <span class="holiday-name">Diwali</span>
+                        <span class="holiday-date">Nov 8, 2026</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Project -->
+            <div class="panel-card animate-in" id="projects-panel">
+                <div class="panel-card-header">
+                    <span class="panel-card-title">Current Project</span>
+                    <button class="card-action-btn" aria-label="View all projects">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="panel-card-body">
+                    <div class="project-item">
+                        <div class="project-name">PutFyre HRM</div>
+                        <div class="project-deadline">Deadline: Oct 30, 2026</div>
+                    </div>
+                    <div class="project-item">
+                        <div class="project-name">Website Redesign</div>
+                        <div class="project-deadline">Deadline: Oct 30, 2026</div>
+                    </div>
+                    <div class="project-item">
+                        <div class="project-name">PutFyre Product</div>
+                        <div class="project-deadline">Deadline: Oct 30, 2026</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colleagues Birthdays & Anniversaries -->
+            <div class="panel-card animate-in" id="birthdays-panel">
+                <div class="panel-card-header">
+                    <span class="panel-card-title">Colleagues Birthdays &amp; Anniversaries</span>
+                    <button class="card-action-btn" aria-label="View all birthdays">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="panel-card-body">
+                    <div class="birthday-item">
+                        <div class="birthday-avatar" style="background:#f59e0b;">WY</div>
+                        <div>
+                            <div class="birthday-name">Will Young</div>
+                            <div class="birthday-event">🎂 Birthday – Apr 18</div>
+                        </div>
+                    </div>
+                    <div class="birthday-item">
+                        <div class="birthday-avatar" style="background:#3b82f6;">BH</div>
+                        <div>
+                            <div class="birthday-name">Brad Hadden</div>
+                            <div class="birthday-event">🎊 Work Anniversary – Apr 24</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /right-col -->
+
+    </main><!-- /page-body -->
+</div><!-- /main-content -->
+
+<!-- ===================== SCRIPTS ===================== -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    /* ---- Auth Guard ---- */
+    HRMDatabase.requireAuth();
+
+    const user = HRMDatabase.getCurrentUser();
+    if (user) {
+        // Set avatar initials
+        const names = user.name.trim().split(/\s+/);
+        const initials = (names[0]?.[0] || '') + (names[1]?.[0] || '');
+        document.getElementById('topbar-avatar').textContent = initials.toUpperCase() || 'ME';
+    }
+
+    /* ---- Overview Line Chart ---- */
+    const overviewCtx = document.getElementById('overviewChart').getContext('2d');
+    const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+    const datasets = {
+        yearly: [
+            { label: 'Attendance', data: [210,195,220,205,230,215,240,225,210,235,220,245], color: '#700b5d' },
+            { label: 'Leave',      data: [20,30,15,25,10,20,5,15,25,10,20,8],             color: '#10b981' },
+            { label: 'Payroll',    data: [180,175,190,185,195,190,200,195,185,200,195,205], color: '#3b82f6' },
+        ],
+        monthly: [
+            { label: 'Present',  data: [18,20,17,22,19,21,23,20,18,22,20,24], color: '#700b5d' },
+            { label: 'Absent',   data: [3,1,4,2,3,1,0,2,4,1,2,0],            color: '#ef4444' },
+        ],
+        custom: [
+            { label: 'Custom A', data: [100,120,90,140,110,130,150,115,100,135,120,145], color: '#f59e0b' },
+        ]
+    };
+
+    let overviewChart = createLineChart(overviewCtx, months, datasets.yearly);
+
+    window.switchTab = function(tab) {
+        ['yearly','monthly','custom'].forEach(t => {
+            document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+        });
+        overviewChart.destroy();
+        overviewChart = createLineChart(overviewCtx, months, datasets[tab]);
+    };
+
+    function createLineChart(ctx, labels, series) {
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: series.map((s, i) => ({
+                    label: s.label,
+                    data: s.data,
+                    borderColor: s.color,
+                    backgroundColor: s.color + '15',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: s.color,
+                    tension: 0.45,
+                    fill: i === 0,
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            boxWidth: 8,
+                            boxHeight: 8,
+                            borderRadius: 4,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: { size: 10, family: 'Inter' },
+                            color: '#6b7280',
+                            padding: 12,
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1f2937',
+                        titleColor: '#f3f4f6',
+                        bodyColor: '#d1d5db',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 10,
+                        cornerRadius: 8,
+                        titleFont: { size: 11, weight: '600', family: 'Inter' },
+                        bodyFont:  { size: 11, family: 'Inter' },
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        border: { display: false },
+                        ticks: { font: { size: 9, family: 'Inter' }, color: '#9ca3af' }
+                    },
+                    y: {
+                        grid: { color: '#f3f4f6' },
+                        border: { display: false, dash: [4,4] },
+                        ticks: { font: { size: 9, family: 'Inter' }, color: '#9ca3af', maxTicksLimit: 5 }
+                    }
+                }
+            }
+        });
+    }
+
+    /* ---- Tickets Donut Chart ---- */
+    const ticketsCtx = document.getElementById('ticketsChart').getContext('2d');
+    new Chart(ticketsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Open', 'On Hold', 'In Progress', 'Solved', 'Closed'],
+            datasets: [{
+                data: [25, 15, 30, 20, 10],
+                backgroundColor: ['#ff6b9d','#f59e0b','#3b82f6','#10b981','#8b5cf6'],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1f2937',
+                    titleColor: '#f3f4f6',
+                    bodyColor: '#d1d5db',
+                    padding: 8,
+                    cornerRadius: 8,
+                    titleFont: { size: 11, family: 'Inter' },
+                    bodyFont:  { size: 11, family: 'Inter' },
+                    callbacks: {
+                        label: ctx => ` ${ctx.label}: ${ctx.parsed}%`
+                    }
+                }
+            }
+        }
+    });
+
+    /* ---- Nav link highlight ---- */
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (this.getAttribute('href') === '#') e.preventDefault();
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+});
+</script>
+</body>
+</html>
